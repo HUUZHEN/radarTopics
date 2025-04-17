@@ -47,6 +47,11 @@ global autodec3;
 global autonum;
 global autodecT;
 global autoT;
+%新的買的
+global twopp1;
+global twopp2;
+%底
+
 clear meandata;
 mvelx=0;
 mvely=0;
@@ -54,8 +59,9 @@ maccx=0;
 maccy=0;
 TTAT1X=0;
 TTAT1Y=0;
-TTAT2X=0
+TTAT2X=0;
 TTAT2Y=0;
+
 meancount=1;
 meandatacount=0;
 timemean=0;
@@ -81,6 +87,12 @@ autoR2=0;
 autodec2R=0;
 auto2R=0;
 autonum=0;
+
+%新的買的
+twopp1=0;
+twopp2=0;
+%底
+
 
 autodecT=0;
 autoT=0;
@@ -125,31 +137,27 @@ if(strcmp(sceneRun,'GUI_Setup'))
     loadCfg = 0; %disabled because loaded in GUI
 end
 
-% Programmatically set scene. Includes example of setting boundary boxes to count in 
+
 if(strcmp(sceneRun,'Prgm_2box'))
     
-    %Read Chirp Configuration file
-    configurationFileName = 'mmw_pc_128x128_2box.cfg';   
+    
+    configurationFileName = 'mmw_pplcount_demo_default.cfg'; %新的換cfg檔  
     cliCfg = readCfg(configurationFileName);
     Params = parseCfg(cliCfg);
     
-    % Room Wall dimensions [m]
-    % Measured relative to radar
+    
     wall.left = -6; % signed: - required
     wall.right = 6;
     wall.front = 6;
     wall.back = -0; % signed: - required
     
-    % define wall [BLx BLy W H]
+   
     scene.areaBox = [wall.left wall.back abs(wall.left)+wall.right wall.front+abs(wall.back)];
     
-    % Define two rectangles for specific counting in the region
-    % Target box settings
+    
     scene.numberOfTargetBoxes = 2;
     
-    % Parameters to make it easier to define two rectangles of the same size
-        % that are side by side    
-    % RO = Rectangle Origin. RO is measured relative to Left Back wall corner
+   
     box.ROxtoLB = 1.0; % x distance from left wall 
     box.ROytoLB = 1.5; % y distance from back wall
     box.height = 2;    % height of boxes 
@@ -159,53 +167,41 @@ if(strcmp(sceneRun,'Prgm_2box'))
     box.RTYplot = box.ROytoLB+wall.back;
     
     
-    % Each row of targetBox specifies the dimensions of a rectangle for counting.
-    % The # of rows of targetBox must match numberOfTargetBoxes.
-    % The rectangles are specified by (x,y) coordinate and width and height 
-    % Custom rectangles can be defined instead if two side by side rects of
-    % same size are not desired using [RTCx RTCy W H] convention
     scene.targetBox = [box.RTXplot box.RTYplot box.width box.height; 
                        (box.RTXplot+box.width+box.sep) box.RTYplot box.width box.height];
     
     
-    % define plotting area as margin around wall
     margin = 0.1; %[m]
     scene.maxPos = [scene.areaBox(1)-margin ...
                     scene.areaBox(1)+scene.areaBox(3)+margin ...
                     scene.areaBox(2)-margin ...
                     scene.areaBox(2)+scene.areaBox(4)+margin];
 
-    % Azimuth tilt of radar. 
     angle = +0; % Signed: + if tilted towards R wall, - if L, 0 if straight forward
     scene.azimuthTilt = angle*pi/180;
 end
 
 
-% Programmatically set scene. Includes example of setting boundary boxes to count in 
 if(strcmp(sceneRun,'Prgm_MaxFOV'))
     
     %Read Chirp Configuration file
-    configurationFileName = 'mmw_pcdemo_default.cfg';   
+    configurationFileName = 'mmw_pplcount_demo_default.cfg';%新換cfg檔
     cliCfg = readCfg(configurationFileName);
     Params = parseCfg(cliCfg);
     
-    % Room Wall dimensions [m]
-    % Measured relative to radar
+   
     wall.left = -6; % signed: - required
     wall.right = 6;
     wall.front = 6;
     wall.back = -0; % signed: - required
     
-    % define wall [BLx BLy W H]
+    
     scene.areaBox = [wall.left wall.back abs(wall.left)+wall.right wall.front+abs(wall.back)];
     
-    % Define two rectangles for specific counting in the region
-    % Target box settings
+    
     scene.numberOfTargetBoxes = 0;
     
-    % Parameters to make it easier to define two rectangles of the same size
-        % that are side by side    
-    % RO = Rectangle Origin. RO is measured relative to Left Back wall corner
+    
     box.ROxtoLB = 1.0; % x distance from left wall 
     box.ROytoLB = 1.5; % y distance from back wall
     box.height = 2;    % height of boxes 
@@ -215,24 +211,20 @@ if(strcmp(sceneRun,'Prgm_MaxFOV'))
     box.RTYplot = box.ROytoLB+wall.back;
     
     
-    % Each row of targetBox specifies the dimensions of a rectangle for counting.
-    % The # of rows of targetBox must match numberOfTargetBoxes.
-    % The rectangles are specified by (x,y) coordinate and width and height 
-    % Custom rectangles can be defined instead if two side by side rects of
-    % same size are not desired using [RTCx RTCy W H] convention
+   
     scene.targetBox = [box.RTXplot box.RTYplot box.width box.height; 
                        (box.RTXplot+box.width+box.sep) box.RTYplot box.width box.height];
     
     
-    % define plotting area as margin around wall
+    
     margin = 0.1; %[m]
     scene.maxPos = [scene.areaBox(1)-margin ...
                     scene.areaBox(1)+scene.areaBox(3)+margin ...
                     scene.areaBox(2)-margin ...
                     scene.areaBox(2)+scene.areaBox(4)+margin];
 
-    % Azimuth tilt of radar. 
-    angle = +0; % Signed: + if tilted towards R wall, - if L, 0 if straight forward
+    
+    angle = +0; 
     scene.azimuthTilt = angle*pi/180;
 end
 
@@ -475,6 +467,11 @@ for iFig = 1:4
         TTAT1R2SS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
         TTAT2LSS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
         TTAT2RSS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
+
+        %新功能
+        twotwoA=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
+        %底
+
         %TSS=rectangle('Position',[-0.4 12.75 0.8 0.5],FaceColor='r',EdgeColor='r');
 
         TTAT1L1A=rectangle('position',[-1.83,4.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
@@ -513,6 +510,14 @@ for iFig = 1:4
         TTAT2LE=rectangle('position',[1.63,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
         TTAT2LF=rectangle('position',[1.63,2.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
 
+        %新功能
+        %TTAT1R1B=rectangle('position',[-2.1,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');左中
+        twotwoB=rectangle('position',[-2.1,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
+        twotwoE=rectangle('position',[1.9,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
+        %底
+
+
+
         TTAT2RA=rectangle('position',[-1.83,4.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
         TTAT2RB=rectangle('position',[-1.83,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
         TTAT2RC=rectangle('position',[-1.83,2.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
@@ -536,6 +541,11 @@ for iFig = 1:4
         TTAT2LStext.FontSize = 14;
         TTAT2RStext=text(-0.1,4,'S6');
         TTAT2RStext.FontSize = 14;
+        %新功能
+        TWOPOINT=text(-0.1,4,'S7');
+        TWOPOINT.FontSize = 14;
+        %底
+
         TTAT1L1cbx = uicontrol(hFigure(iFig),'style','checkbox', 'string', 'TTAT I(L-2m)',...
             'Units','Normalized', 'Position',[0.05 0.9 contW contH],...
             'FontSize', 15);
@@ -557,6 +567,11 @@ for iFig = 1:4
         Tcbx = uicontrol(hFigure(iFig),'style','checkbox', 'string', 'Type T',...
             'Units','Normalized', 'Position',[0.65 0.9 contW contH],...
             'FontSize', 15);
+        %新功能
+        TwoPointcbx = uicontrol(hFigure(iFig), 'Style', 'checkbox', 'String', 'Two Point', ...
+            'Units', 'Normalized', 'Position', [0.65, 0.86, contW, contH], ...
+            'FontSize', 15);
+        %底
 
 
         title(figureTitles{iFig},'FontUnits','Normalized', 'FontSize',0.05);
@@ -582,7 +597,7 @@ for iFig = 1:4
         tablePosition = [0.1 0.6 0.8 0.3];
         displayChirpParams(Params, tablePosition, hFigure(iFig));
     end
-    
+
     if(strcmp(figureTitles{iFig},'Data'))     
         axes('parent', hFigure(iFig))
         hStatGlobal(1) = text(0, 0.9, 'Frame # 0', 'FontSize',12, 'Visible', 'on');
@@ -595,10 +610,7 @@ for iFig = 1:4
         UWBTag1 = text(0.3, 0.5, 'null', 'FontSize',12, 'Visible', 'off');
         UWBTag2 = text(0.3, 0.4, 'null', 'FontSize',12, 'Visible', 'off');
         UWBTag3 = text(0.3, 0.3, 'null', 'FontSize',12, 'Visible', 'off');
-        %speed(1) = text(0, 0.4, 'accx: 0', 'FontSize',12, 'Visible', 'on');
-        %speed(2) = text(0, 0.3, 'accy: 0', 'FontSize',12, 'Visible', 'on');
-        %speed(3) = text(0, 0.2, 'accx2: 0', 'FontSize',12, 'Visible', 'on');
-        %speed(4) = text(0, 0.1, 'accy2: 0', 'FontSize',12, 'Visible', 'on');
+
         btn = uicontrol('Style', 'pushbutton', ...
                 'String', 'Write File', ...
                 'Position', [50 200 100 50]);
@@ -852,7 +864,6 @@ while(isvalid(hDataSerialPort))
                         end
                         
                     case 8
-                        % Target Index TLV
                         numIndices = valueLength/indexLengthInBytes;
                         mIndex = typecast(uint8(rxData(offset+1:offset+numIndices)),'uint8');
                         offset = offset + valueLength;
@@ -885,18 +896,29 @@ while(isvalid(hDataSerialPort))
         end
         fHist(frameNum).targetList.G = G;
         fHist(frameNum).indexArray = mIndex;
-       
-        % Plot pointCloud
         fHist(frameNum).benchmarks(2) = 1000*toc(frameStart);
+
+
+        %新功能
+        if(get(TwoPointcbx,'Value')==0)
+            TWOPOINT.Visible='off';
+            twotwoA.Visible = 'off';%長方形
+            twotwoB.Visible = 'off';%圓形
+            twotwoE.Visible= 'off';
+            twopp1=0;
+        elseif(get(TwoPointcbx,'Value')==1)
+            TWOPOINT.Visible='on';
+            twotwoA.Visible = 'on';
+            twotwoB.Visible='on';
+            twotwoE.Visible= 'on';
+            twopp1=1;
+        end
+        %底
    
-        %if(get(hRbPause, 'Value') == 1)
-            %pause(0.01);
-            %continue;
-        %end
         if(get(TTAT1L1cbx, 'Value') == 0)
-            TTAT1L1SS.Visible = 'off';
-            TTAT1L1Stext.Visible = 'off';
-            TTAT1L1A.Visible = 'off';
+            TTAT1L1SS.Visible = 'off';%長方形
+            TTAT1L1Stext.Visible = 'off';%字
+            TTAT1L1A.Visible = 'off';%圓形
             TTAT1L1B.Visible = 'off';
             TTAT1L1C.Visible = 'off';
             TTAT1L1D.Visible = 'off';
@@ -914,6 +936,7 @@ while(isvalid(hDataSerialPort))
             TTAT1L1F.Visible = 'on';
             autodec=1;
         end
+
         if(get(TTAT1R1cbx, 'Value') == 0)
             TTAT1R1SS.Visible = 'off';
             TTAT1R1Stext.Visible = 'off';
@@ -928,7 +951,7 @@ while(isvalid(hDataSerialPort))
             TTAT1R1SS.Visible = 'on';
             TTAT1R1Stext.Visible = 'on';
             TTAT1R1A.Visible = 'on';
-            TTAT1R1B.Visible = 'on';
+            TTAT1R1B.Visible = 'on';%左中
             TTAT1R1C.Visible = 'on';
             TTAT1R1D.Visible = 'on';
             TTAT1R1E.Visible = 'on';
@@ -1044,6 +1067,7 @@ while(isvalid(hDataSerialPort))
             TTAT1R2cbx.Visible='off';
             autodecT=1;
         end
+        
         % Delete previous points
         if(ishandle(hPlotCloudHandleAll))
             delete(hPlotCloudHandleAll);
@@ -1080,16 +1104,6 @@ while(isvalid(hDataSerialPort))
             end
         end
         
-%{        
-        if(size(posInRange,2))
-            % Cross out Clutter
-            hPlotCloudHandleClutter = plot(trackingAx, posInRange(1,clutterInd), posInRange(2,clutterInd), 'xk');
-            % Indicate Static
-            hPlotCloudHandleStatic = plot(trackingAx, posInRange(1,staticInd & ~clutterInd), posInRange(2,staticInd & ~clutterInd), 'ok');
-            % Indicate Dynamic
-            hPlotCloudHandleDynamic = plot(trackingAx, posInRange(1,~staticInd), posInRange(2,~staticInd), 'ob');
-        end
-%}        
         fHist(frameNum).benchmarks(3) = 1000*toc(frameStart);
 
         switch trackerRun
@@ -1123,12 +1137,9 @@ while(isvalid(hDataSerialPort))
             mIndex = mIndex + 1;
         end
         
-        % Plot previous frame's 3D points       
         if(size(point3D,2))   
             if isempty(hPlotPoints3D)
-                %hPlotPoints3D = plot(gatingAx, point3D(1,:), point3D(2,:), '.k');%, point3D(3,:),'.k');
             else
-                %set(hPlotPoints3D, 'XData', point3D(1,:),'YData', point3D(2,:)); %, 'ZData', point3D(3,:));
             end
         end     
         
@@ -1249,6 +1260,8 @@ while(isvalid(hDataSerialPort))
                 fvelx=velx;
                 fvely=vely;
                 end
+
+                
                 if n==2
                 xdata2 = S(1,2);
                 ydata2 = S(2,2);
@@ -1265,9 +1278,16 @@ while(isvalid(hDataSerialPort))
                 fvelx2=velx2;
                 fvely2=vely2;
                 end
+
+
                 if autonum ==1
-                     TTAT1L1SS.EdgeColor='r';
-                     TTAT1L2SS.EdgeColor='r';
+
+                     %新估能
+                     TWOPOINT.EdgeColor='r';
+                     TWOPOINT.FaceColor='r';
+                     %底
+                     TTAT1L1SS.EdgeColor='r';%長方形
+                     TTAT1L2SS.EdgeColor='r';%長方形
                      TTAT1R1SS.EdgeColor='r';
                      TTAT1R2SS.EdgeColor='r';
                      TTAT2LSS.EdgeColor='r';
@@ -1368,6 +1388,12 @@ while(isvalid(hDataSerialPort))
 
                      autonum=0;
                 end
+
+                
+                %新功能
+                %switch   %twopoint
+                %底                
+                
                 switch auto2           %TTAT 2L
                     case 1
                         TTAT2LA.FaceColor='g';
@@ -1448,6 +1474,8 @@ while(isvalid(hDataSerialPort))
                             break;
                         end
                 end
+
+
                 switch auto2R           %TTAT 2R
                     case 1
                         TTAT2RD.FaceColor='g';
@@ -1904,6 +1932,8 @@ while(isvalid(hDataSerialPort))
                         break;
                         end
                 end
+
+                
                 switch autoR2          %TTAT 1 R 2.5M
                     case 1
                         TTAT1R2D.FaceColor='g';
@@ -2028,6 +2058,7 @@ while(isvalid(hDataSerialPort))
                         break;
                         end
                 end
+                
                switch autoT          %T字形
                     case 1
                         TB.FaceColor='g';
@@ -2081,7 +2112,7 @@ while(isvalid(hDataSerialPort))
                             writeflag=2;
                         break;
                         end
-                end
+               end
 
                 values = ReadValuesFromFile(filePath);
                 if length(values)==0
@@ -2149,19 +2180,6 @@ while(isvalid(hDataSerialPort))
                 set(hTargetBoxHandle(nBoxes), 'LineWidth', 4);
             end
         end
-
-%         if(getappdata(hPbExit, 'exitKeyPressed') == 1)
-%             if(frameNumLogged > 10000)
-%                 fHist = [fHist(frameNum+1:end) fHist(1:frameNum)];
-%             else
-%                 fHist = fHist(1:frameNum);
-%             end
-%             
-%             save('fhistRT.mat','fHist');
-%             disp('Saving data and exiting');
-%             close_main()
-%             return;
-%         end
         
         frameNum = frameNum + 1;
         frameNumLogged = frameNumLogged + 1;      
@@ -2293,12 +2311,7 @@ while(isvalid(hDataSerialPort))
     else
         errordlg('Port sync error: Please close and restart program');
     end
-%{
-    % To catch up, we read and discard all uart data
-    bytesAvailable = get(hDataSerialPort,'BytesAvailable');
-    disp(bytesAvailable);
-    [rxDataDebug, byteCountDebug] = fread(hDataSerialPort, bytesAvailable, 'uint8');
-%}    
+
     while(lostSync)
         for n=1:8
             [rxByte, byteCount] = fread(hDataSerialPort, 1, 'uint8');
@@ -2322,8 +2335,8 @@ while(isvalid(hDataSerialPort))
     end
 end
 
-%% Helper functions
 
+%% Helper functions
 %Display Chirp parameters in table on screen
 function h = displayChirpParams(Params, Position, hFig)
 
@@ -2458,10 +2471,6 @@ function [sphandle] = configureDataSport(comPortNum, bufferSize)
 end
 
 function [sphandle] = configureControlPort(comPortNum)
-    %if ~isempty(instrfind('Type','serial'))
-    %    disp('Serial port(s) already open. Re-initializing...');
-    %    delete(instrfind('Type','serial'));  % delete open serial ports.
-    %end
     comPortString = ['COM' num2str(comPortNum)];
     sphandle = serial(comPortString,'BaudRate',115200);
     set(sphandle,'Parity','none')    
@@ -2648,6 +2657,13 @@ global autoR2;
 global autodecR2;
 global autoT;
 global autodecT;
+
+global autodecTwo;
+autodecTwo = 0;
+global autoTwo;
+autoTwo = 0;
+
+
 if autodec == 1
   auto=1;
 end
@@ -2812,3 +2828,4 @@ function values = ReadValuesFromFile(filePath)
     fclose(fileID);
     values = values{1}';
 end
+
