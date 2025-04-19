@@ -137,27 +137,31 @@ if(strcmp(sceneRun,'GUI_Setup'))
     loadCfg = 0; %disabled because loaded in GUI
 end
 
-
+% Programmatically set scene. Includes example of setting boundary boxes to count in 
 if(strcmp(sceneRun,'Prgm_2box'))
     
-    
-    configurationFileName = 'mmw_pplcount_demo_default.cfg'; %新的換cfg檔  
+    %Read Chirp Configuration file
+    configurationFileName = 'mmw_pplcount_demo_default.cfg';%新改mmw_pc_128x128_2box.cfg原本的   
     cliCfg = readCfg(configurationFileName);
     Params = parseCfg(cliCfg);
     
-    
+    % Room Wall dimensions [m]
+    % Measured relative to radar
     wall.left = -6; % signed: - required
     wall.right = 6;
     wall.front = 6;
     wall.back = -0; % signed: - required
     
-   
+    % define wall [BLx BLy W H]
     scene.areaBox = [wall.left wall.back abs(wall.left)+wall.right wall.front+abs(wall.back)];
     
-    
+    % Define two rectangles for specific counting in the region
+    % Target box settings
     scene.numberOfTargetBoxes = 2;
     
-   
+    % Parameters to make it easier to define two rectangles of the same size
+        % that are side by side    
+    % RO = Rectangle Origin. RO is measured relative to Left Back wall corner
     box.ROxtoLB = 1.0; % x distance from left wall 
     box.ROytoLB = 1.5; % y distance from back wall
     box.height = 2;    % height of boxes 
@@ -167,41 +171,53 @@ if(strcmp(sceneRun,'Prgm_2box'))
     box.RTYplot = box.ROytoLB+wall.back;
     
     
+    % Each row of targetBox specifies the dimensions of a rectangle for counting.
+    % The # of rows of targetBox must match numberOfTargetBoxes.
+    % The rectangles are specified by (x,y) coordinate and width and height 
+    % Custom rectangles can be defined instead if two side by side rects of
+    % same size are not desired using [RTCx RTCy W H] convention
     scene.targetBox = [box.RTXplot box.RTYplot box.width box.height; 
                        (box.RTXplot+box.width+box.sep) box.RTYplot box.width box.height];
     
     
+    % define plotting area as margin around wall
     margin = 0.1; %[m]
     scene.maxPos = [scene.areaBox(1)-margin ...
                     scene.areaBox(1)+scene.areaBox(3)+margin ...
                     scene.areaBox(2)-margin ...
                     scene.areaBox(2)+scene.areaBox(4)+margin];
 
+    % Azimuth tilt of radar. 
     angle = +0; % Signed: + if tilted towards R wall, - if L, 0 if straight forward
     scene.azimuthTilt = angle*pi/180;
 end
 
 
+% Programmatically set scene. Includes example of setting boundary boxes to count in 
 if(strcmp(sceneRun,'Prgm_MaxFOV'))
     
     %Read Chirp Configuration file
-    configurationFileName = 'mmw_pplcount_demo_default.cfg';%新換cfg檔
+    configurationFileName = 'mmw_pplcount_demo_default.cfg';%新改mmw_pc_128x128_2box.cfg原本的      
     cliCfg = readCfg(configurationFileName);
     Params = parseCfg(cliCfg);
     
-   
+    % Room Wall dimensions [m]
+    % Measured relative to radar
     wall.left = -6; % signed: - required
     wall.right = 6;
     wall.front = 6;
     wall.back = -0; % signed: - required
     
-    
+    % define wall [BLx BLy W H]
     scene.areaBox = [wall.left wall.back abs(wall.left)+wall.right wall.front+abs(wall.back)];
     
-    
+    % Define two rectangles for specific counting in the region
+    % Target box settings
     scene.numberOfTargetBoxes = 0;
     
-    
+    % Parameters to make it easier to define two rectangles of the same size
+        % that are side by side    
+    % RO = Rectangle Origin. RO is measured relative to Left Back wall corner
     box.ROxtoLB = 1.0; % x distance from left wall 
     box.ROytoLB = 1.5; % y distance from back wall
     box.height = 2;    % height of boxes 
@@ -211,20 +227,24 @@ if(strcmp(sceneRun,'Prgm_MaxFOV'))
     box.RTYplot = box.ROytoLB+wall.back;
     
     
-   
+    % Each row of targetBox specifies the dimensions of a rectangle for counting.
+    % The # of rows of targetBox must match numberOfTargetBoxes.
+    % The rectangles are specified by (x,y) coordinate and width and height 
+    % Custom rectangles can be defined instead if two side by side rects of
+    % same size are not desired using [RTCx RTCy W H] convention
     scene.targetBox = [box.RTXplot box.RTYplot box.width box.height; 
                        (box.RTXplot+box.width+box.sep) box.RTYplot box.width box.height];
     
     
-    
+    % define plotting area as margin around wall
     margin = 0.1; %[m]
     scene.maxPos = [scene.areaBox(1)-margin ...
                     scene.areaBox(1)+scene.areaBox(3)+margin ...
                     scene.areaBox(2)-margin ...
                     scene.areaBox(2)+scene.areaBox(4)+margin];
 
-    
-    angle = +0; 
+    % Azimuth tilt of radar. 
+    angle = +0; % Signed: + if tilted towards R wall, - if L, 0 if straight forward
     scene.azimuthTilt = angle*pi/180;
 end
 
@@ -366,7 +386,7 @@ peopleCountInBox = zeros(1, scene.numberOfTargetBoxes);
 rxData = zeros(10000,1,'uint8');
 sw_row=repmat("/",1,17);
 %emptydata=vertcat(data,empty_row);
-maxNumTracks = 20;
+maxNumTracks = 2;%新的 原本20
 maxNumPoints = 250;
 
 hPlotCloudHandleAll = [];
@@ -461,25 +481,24 @@ for iFig = 1:4
 
         %plot(gatingAx, sensor.rangeMin*sin(sensor.angles+scene.azimuthTilt), sensor.rangeMin*cos(sensor.angles+scene.azimuthTilt), '-k');  hold on;
         plot(gatingAx, [0 sensor.rangeMax*sin(sensor.angles+scene.azimuthTilt) 0],[0 sensor.rangeMax*cos(sensor.angles+scene.azimuthTilt) 0], '-k');
-        TTAT1L1SS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
+        TTAT1L1SS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');%中心長方形
         TTAT1L2SS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
         TTAT1R1SS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
         TTAT1R2SS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
         TTAT2LSS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
         TTAT2RSS=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
-
         %新功能
         twotwoA=rectangle('Position',[-0.4 3.75 0.8 0.5],FaceColor='r',EdgeColor='r');
         %底
 
         %TSS=rectangle('Position',[-0.4 12.75 0.8 0.5],FaceColor='r',EdgeColor='r');
 
-        TTAT1L1A=rectangle('position',[-1.83,4.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
-        TTAT1L1B=rectangle('position',[-2.1,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
-        TTAT1L1C=rectangle('position',[-1.83,2.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
-        TTAT1L1D=rectangle('position',[1.63,4.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
-        TTAT1L1E=rectangle('position',[1.9,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
-        TTAT1L1F=rectangle('position',[1.63,2.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
+        TTAT1L1A=rectangle('position',[-1.83,4.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');%ttat l左上原點
+        TTAT1L1B=rectangle('position',[-2.1,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');%ttat l左中原點
+        TTAT1L1C=rectangle('position',[-1.83,2.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');%ttat l左下原點
+        TTAT1L1D=rectangle('position',[1.63,4.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');%ttat l右上原點
+        TTAT1L1E=rectangle('position',[1.9,3.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');%ttat l右中原點
+        TTAT1L1F=rectangle('position',[1.63,2.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');%ttat l右下原點
         
 
         TTAT1R1A=rectangle('position',[-1.83,4.9,0.2,0.2],'curvature',[1,1],'edgecolor','r','facecolor','r');
@@ -916,24 +935,24 @@ while(isvalid(hDataSerialPort))
         %底
    
         if(get(TTAT1L1cbx, 'Value') == 0)
-            TTAT1L1SS.Visible = 'off';%長方形
+            TTAT1L1SS.Visible = 'off';%中心長方形
             TTAT1L1Stext.Visible = 'off';%字
-            TTAT1L1A.Visible = 'off';%圓形
-            TTAT1L1B.Visible = 'off';
-            TTAT1L1C.Visible = 'off';
-            TTAT1L1D.Visible = 'off';
-            TTAT1L1E.Visible = 'off';
-            TTAT1L1F.Visible = 'off';
+            TTAT1L1A.Visible = 'off';%%ttat l左上原點
+            TTAT1L1B.Visible = 'off';%ttat l左中原點
+            TTAT1L1C.Visible = 'off';%ttat l左下原點
+            TTAT1L1D.Visible = 'off';%ttat l右上原點
+            TTAT1L1E.Visible = 'off';%ttat l右中原點
+            TTAT1L1F.Visible = 'off';%ttat l右下原點
             autodec=0;
         elseif(get(TTAT1L1cbx, 'Value') == 1)
-            TTAT1L1SS.Visible = 'on';
+            TTAT1L1SS.Visible = 'on';%中心長方形
             TTAT1L1Stext.Visible = 'on';
-            TTAT1L1A.Visible = 'on';
-            TTAT1L1B.Visible = 'on';
-            TTAT1L1C.Visible = 'on';
-            TTAT1L1D.Visible = 'on';
-            TTAT1L1E.Visible = 'on';
-            TTAT1L1F.Visible = 'on';
+            TTAT1L1A.Visible = 'on';%ttat l左上原點
+            TTAT1L1B.Visible = 'on';%ttat l左中原點
+            TTAT1L1C.Visible = 'on';%ttat l左下原點
+            TTAT1L1D.Visible = 'on';%ttat l右上原點
+            TTAT1L1E.Visible = 'on';%ttat l右中原點
+            TTAT1L1F.Visible = 'on';%ttat l右下原點
             autodec=1;
         end
 
@@ -1104,6 +1123,16 @@ while(isvalid(hDataSerialPort))
             end
         end
         
+%{        
+        if(size(posInRange,2))
+            % Cross out Clutter
+            hPlotCloudHandleClutter = plot(trackingAx, posInRange(1,clutterInd), posInRange(2,clutterInd), 'xk');
+            % Indicate Static
+            hPlotCloudHandleStatic = plot(trackingAx, posInRange(1,staticInd & ~clutterInd), posInRange(2,staticInd & ~clutterInd), 'ok');
+            % Indicate Dynamic
+            hPlotCloudHandleDynamic = plot(trackingAx, posInRange(1,~staticInd), posInRange(2,~staticInd), 'ob');
+        end
+%}        
         fHist(frameNum).benchmarks(3) = 1000*toc(frameStart);
 
         switch trackerRun
@@ -1137,9 +1166,12 @@ while(isvalid(hDataSerialPort))
             mIndex = mIndex + 1;
         end
         
+        % Plot previous frame's 3D points       
         if(size(point3D,2))   
             if isempty(hPlotPoints3D)
+                %hPlotPoints3D = plot(gatingAx, point3D(1,:), point3D(2,:), '.k');%, point3D(3,:),'.k');
             else
+                %set(hPlotPoints3D, 'XData', point3D(1,:),'YData', point3D(2,:)); %, 'ZData', point3D(3,:));
             end
         end     
         
@@ -1286,31 +1318,31 @@ while(isvalid(hDataSerialPort))
                      TWOPOINT.EdgeColor='r';
                      TWOPOINT.FaceColor='r';
                      %底
-                     TTAT1L1SS.EdgeColor='r';%長方形
-                     TTAT1L2SS.EdgeColor='r';%長方形
+                     TTAT1L1SS.EdgeColor='r';%中心長方形
+                     TTAT1L2SS.EdgeColor='r';
                      TTAT1R1SS.EdgeColor='r';
                      TTAT1R2SS.EdgeColor='r';
                      TTAT2LSS.EdgeColor='r';
                      TTAT2RSS.EdgeColor='r';
-                     TTAT1L1SS.FaceColor='r';
+                     TTAT1L1SS.FaceColor='r';%中心長方形
                      TTAT1L2SS.FaceColor='r';
                      TTAT1R1SS.FaceColor='r';
                      TTAT1R2SS.FaceColor='r';
                      TTAT2LSS.FaceColor='r';
                      TTAT2RSS.FaceColor='r';
 
-                     TTAT1L1A.EdgeColor='r';
-                     TTAT1L1B.EdgeColor='r';
-                     TTAT1L1C.EdgeColor='r';
-                     TTAT1L1D.EdgeColor='r';
-                     TTAT1L1E.EdgeColor='r';
-                     TTAT1L1F.EdgeColor='r';
-                     TTAT1L1A.FaceColor='r';
-                     TTAT1L1B.FaceColor='r';
-                     TTAT1L1C.FaceColor='r';
-                     TTAT1L1D.FaceColor='r';
-                     TTAT1L1E.FaceColor='r';
-                     TTAT1L1F.FaceColor='r';
+                     TTAT1L1A.EdgeColor='r';%ttat l左上原點
+                     TTAT1L1B.EdgeColor='r';%ttat l左中原點
+                     TTAT1L1C.EdgeColor='r';%ttat l左下原點
+                     TTAT1L1D.EdgeColor='r';%ttat l右上原點
+                     TTAT1L1E.EdgeColor='r';%ttat l右中原點
+                     TTAT1L1F.EdgeColor='r';%ttat l右下原點
+                     TTAT1L1A.FaceColor='r';%ttat l左上原點
+                     TTAT1L1B.FaceColor='r';%ttat l左中原點
+                     TTAT1L1C.FaceColor='r';%ttat l左下原點
+                     TTAT1L1D.FaceColor='r';%ttat l右上原點
+                     TTAT1L1E.FaceColor='r';%ttat l右中原點
+                     TTAT1L1F.FaceColor='r';%ttat l右下原點
 
                      TTAT1R1A.EdgeColor='r';
                      TTAT1R1B.EdgeColor='r';
@@ -1390,8 +1422,7 @@ while(isvalid(hDataSerialPort))
                 end
 
                 
-                %新功能
-                %switch   %twopoint
+                %新功能 
                 %底                
                 
                 switch auto2           %TTAT 2L
@@ -1560,121 +1591,121 @@ while(isvalid(hDataSerialPort))
 
                 switch auto         %TTAT 1 L 2M
                     case 1
-                        TTAT1L1A.FaceColor='g';
-                        TTAT1L1A.EdgeColor='g';
+                        TTAT1L1A.FaceColor='g';%ttat l左上原點
+                        TTAT1L1A.EdgeColor='g';%ttat l左上原點
                         if xdata < -1.9 && ydata > 3.5
                             swflag=1;
                             auto=2;
                         break;
                         end
                     case 2
-                        TTAT1L1A.FaceColor='r';
-                        TTAT1L1A.EdgeColor='r';
-                        TTAT1L1SS.FaceColor='g';
-                        TTAT1L1SS.EdgeColor='g';
+                        TTAT1L1A.FaceColor='r';%ttat l左上原點
+                        TTAT1L1A.EdgeColor='r';%ttat l左上原點
+                        TTAT1L1SS.FaceColor='g';%中心長方形
+                        TTAT1L1SS.EdgeColor='g';%中心長方形
                         if xdata > -0.5 && xdata < 0.5 && ydata > 3.55 && ydata < 4.45
                             swflag=1;
                             auto=3;
                         break;
                         end
                     case 3
-                        TTAT1L1SS.FaceColor='r';
-                        TTAT1L1SS.EdgeColor='r';
-                        TTAT1L1B.FaceColor='g';
-                        TTAT1L1B.EdgeColor='g';
+                        TTAT1L1SS.FaceColor='r';%中心長方形
+                        TTAT1L1SS.EdgeColor='r';%中心長方形
+                        TTAT1L1B.FaceColor='g';%ttat l左中原點
+                        TTAT1L1B.EdgeColor='g';%ttat l左中原點
                         if xdata < -2.2
                             swflag=1;
                             auto=4;
                         break;
                         end
                      case 4
-                        TTAT1L1SS.FaceColor='g';
-                        TTAT1L1SS.EdgeColor='g';
-                        TTAT1L1B.FaceColor='r';
-                        TTAT1L1B.EdgeColor='r';
+                        TTAT1L1SS.FaceColor='g';%中心長方形
+                        TTAT1L1SS.EdgeColor='g';%中心長方形
+                        TTAT1L1B.FaceColor='r';%ttat l左中原點
+                        TTAT1L1B.EdgeColor='r';%ttat l左中原點
                         if xdata > -0.5 && xdata < 0.5 && ydata > 3.55 && ydata < 4.45
                             swflag=1;
                             auto=5;
                         break;
                         end
                       case 5
-                        TTAT1L1SS.FaceColor='r';
-                        TTAT1L1SS.EdgeColor='r';
-                        TTAT1L1C.FaceColor='g';
-                        TTAT1L1C.EdgeColor='g';
+                        TTAT1L1SS.FaceColor='r';%中心長方形
+                        TTAT1L1SS.EdgeColor='r';%中心長方形
+                        TTAT1L1C.FaceColor='g';%ttat l左下原點
+                        TTAT1L1C.EdgeColor='g';%ttat l左下原點
                         if xdata < -1.9 && ydata > 2
-                            TTAT1L1C.FaceColor='r';
-                            TTAT1L1C.EdgeColor='r';
+                            TTAT1L1C.FaceColor='r';%ttat l左下原點
+                            TTAT1L1C.EdgeColor='r';%ttat l左下原點
                             swflag=1;
                             auto=6;
                         break;
                         end
                       case 6
-                        TTAT1L1SS.FaceColor='g';
-                        TTAT1L1SS.EdgeColor='g';
+                        TTAT1L1SS.FaceColor='g';%中心長方形
+                        TTAT1L1SS.EdgeColor='g';%中心長方形
                         if xdata > -0.5 && xdata < 0.5 && ydata > 3.55 && ydata < 4.45
                             swflag=1;
                             auto=7;
                         break;
                         end
                       case 7
-                        TTAT1L1SS.FaceColor='r';
-                        TTAT1L1SS.EdgeColor='r';
-                        TTAT1L1D.FaceColor='g';
-                        TTAT1L1D.EdgeColor='g';
+                        TTAT1L1SS.FaceColor='r';%中心長方形
+                        TTAT1L1SS.EdgeColor='r';%中心長方形
+                        TTAT1L1D.FaceColor='g';%ttat l右上原點
+                        TTAT1L1D.EdgeColor='g';%ttat l右上原點
                         if xdata > 1.9 && ydata > 3.5
                             swflag=1;
                             auto=8;
                         break;
                         end
                       case 8
-                        TTAT1L1D.FaceColor='r';
-                        TTAT1L1D.EdgeColor='r';  
-                        TTAT1L1SS.FaceColor='g';
-                        TTAT1L1SS.EdgeColor='g';
+                        TTAT1L1D.FaceColor='r';%ttat l右上原點
+                        TTAT1L1D.EdgeColor='r';%ttat l右上原點
+                        TTAT1L1SS.FaceColor='g';%中心長方形
+                        TTAT1L1SS.EdgeColor='g';%中心長方形
                         if xdata > -0.5 && xdata < 0.5 && ydata > 3.55 && ydata < 4.45
                             swflag=1;
                             auto=9;
                         break;
                         end
                     case 9
-                        TTAT1L1SS.FaceColor='r';
-                        TTAT1L1SS.EdgeColor='r';
-                        TTAT1L1E.FaceColor='g';
-                        TTAT1L1E.EdgeColor='g';
+                        TTAT1L1SS.FaceColor='r';%中心長方形
+                        TTAT1L1SS.EdgeColor='r';%中心長方形
+                        TTAT1L1E.FaceColor='g';%ttat l右中原點
+                        TTAT1L1E.EdgeColor='g';%ttat l右中原點
                         if xdata > 2.2                            
                             swflag=1;
                             auto=10;
                         break;
                         end
                      case 10
-                        TTAT1L1E.FaceColor='r';
-                        TTAT1L1E.EdgeColor='r';
-                        TTAT1L1SS.FaceColor='g';
-                        TTAT1L1SS.EdgeColor='g';
+                        TTAT1L1E.FaceColor='r';%ttat l右中原點
+                        TTAT1L1E.EdgeColor='r';%ttat l右中原點
+                        TTAT1L1SS.FaceColor='g';%中心長方形
+                        TTAT1L1SS.EdgeColor='g';%中心長方形
                         if xdata > -0.5 && xdata < 0.5 && ydata > 3.55 && ydata < 4.45
                             swflag=1;
                             auto=11;
                         break;
                         end
                       case 11
-                        TTAT1L1SS.FaceColor='r';
-                        TTAT1L1SS.EdgeColor='r';
-                        TTAT1L1F.FaceColor='g';
-                        TTAT1L1F.EdgeColor='g';
+                        TTAT1L1SS.FaceColor='r';%中心長方形
+                        TTAT1L1SS.EdgeColor='r';%中心長方形
+                        TTAT1L1F.FaceColor='g';%ttat l右下原點
+                        TTAT1L1F.EdgeColor='g';%ttat l右下原點
                         if xdata > 1.9 && ydata > 2
                             swflag=1;
                             auto=12;
                         break;
                         end
                      case 12
-                        TTAT1L1F.FaceColor='r';
-                        TTAT1L1F.EdgeColor='r';
-                        TTAT1L1SS.FaceColor='g';
-                        TTAT1L1SS.EdgeColor='g';
+                        TTAT1L1F.FaceColor='r';%ttat l右下原點
+                        TTAT1L1F.EdgeColor='r';%ttat l右下原點
+                        TTAT1L1SS.FaceColor='g';%中心長方形
+                        TTAT1L1SS.EdgeColor='g';%中心長方形
                         if xdata > -0.5 && xdata < 0.5 && ydata > 3.55 && ydata < 4.45
-                            TTAT1L1SS.FaceColor='r';
-                            TTAT1L1SS.EdgeColor='r';
+                            TTAT1L1SS.FaceColor='r';%中心長方形
+                            TTAT1L1SS.EdgeColor='r';%中心長方形
                             if autodec == 1
                               auto=0;
                             end
@@ -2058,7 +2089,6 @@ while(isvalid(hDataSerialPort))
                         break;
                         end
                 end
-                
                switch autoT          %T字形
                     case 1
                         TB.FaceColor='g';
@@ -2180,6 +2210,19 @@ while(isvalid(hDataSerialPort))
                 set(hTargetBoxHandle(nBoxes), 'LineWidth', 4);
             end
         end
+
+%         if(getappdata(hPbExit, 'exitKeyPressed') == 1)
+%             if(frameNumLogged > 10000)
+%                 fHist = [fHist(frameNum+1:end) fHist(1:frameNum)];
+%             else
+%                 fHist = fHist(1:frameNum);
+%             end
+%             
+%             save('fhistRT.mat','fHist');
+%             disp('Saving data and exiting');
+%             close_main()
+%             return;
+%         end
         
         frameNum = frameNum + 1;
         frameNumLogged = frameNumLogged + 1;      
@@ -2311,7 +2354,12 @@ while(isvalid(hDataSerialPort))
     else
         errordlg('Port sync error: Please close and restart program');
     end
-
+%{
+    % To catch up, we read and discard all uart data
+    bytesAvailable = get(hDataSerialPort,'BytesAvailable');
+    disp(bytesAvailable);
+    [rxDataDebug, byteCountDebug] = fread(hDataSerialPort, bytesAvailable, 'uint8');
+%}    
     while(lostSync)
         for n=1:8
             [rxByte, byteCount] = fread(hDataSerialPort, 1, 'uint8');
@@ -2471,6 +2519,10 @@ function [sphandle] = configureDataSport(comPortNum, bufferSize)
 end
 
 function [sphandle] = configureControlPort(comPortNum)
+    %if ~isempty(instrfind('Type','serial'))
+    %    disp('Serial port(s) already open. Re-initializing...');
+    %    delete(instrfind('Type','serial'));  % delete open serial ports.
+    %end
     comPortString = ['COM' num2str(comPortNum)];
     sphandle = serial(comPortString,'BaudRate',115200);
     set(sphandle,'Parity','none')    
